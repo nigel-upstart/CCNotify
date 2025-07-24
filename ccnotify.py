@@ -252,9 +252,8 @@ def main():
     try:
         # Check if hook type is provided as command line argument
         if len(sys.argv) < 2:
-            logging.error("Usage: ccnotify.py <hook_type>")
-            logging.error("Valid hook types: UserPromptSubmit, Stop, Notification")
-            sys.exit(1)
+            print("ok")
+            return
         
         expected_event_name = sys.argv[1]
         valid_events = ['UserPromptSubmit', 'Stop', 'Notification']
