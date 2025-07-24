@@ -16,14 +16,14 @@ from pathlib import Path
 class ClaudePromptTracker:
     def __init__(self):
         """Initialize the prompt tracker with database setup"""
-        self.db_path = Path.home() / ".claude" / "prompt_tracker.db"
+        self.db_path = Path.home() / ".claude" / "ccnotify.db"
         self.db_path.parent.mkdir(exist_ok=True)
         self.setup_logging()
         self.init_database()
     
     def setup_logging(self):
         """Setup logging to file"""
-        log_path = Path.home() / ".claude" / "prompt_tracker.log"
+        log_path = Path.home() / ".claude" / "ccnotify.log"
         logging.basicConfig(
             filename=log_path,
             level=logging.INFO,
@@ -41,7 +41,7 @@ class ClaudePromptTracker:
                     session_id TEXT NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     prompt TEXT,
-                    dirname TEXT,
+                    cwd TEXT,
                     seq INTEGER,
                     stoped_at DATETIME,
                     lastWaitUserAt DATETIME
@@ -71,13 +71,12 @@ class ClaudePromptTracker:
         session_id = data.get('session_id')
         prompt = data.get('prompt', '')
         cwd = data.get('cwd', '')
-        dirname = os.path.basename(cwd) if cwd else 'unknown'
         
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                INSERT INTO prompt (session_id, prompt, dirname)
+                INSERT INTO prompt (session_id, prompt, cwd)
                 VALUES (?, ?, ?)
-            """, (session_id, prompt, dirname))
+            """, (session_id, prompt, cwd))
             conn.commit()
         
         logging.info(f"Recorded prompt for session {session_id}")
@@ -89,7 +88,7 @@ class ClaudePromptTracker:
         with sqlite3.connect(self.db_path) as conn:
             # Find the latest unfinished record for this session
             cursor = conn.execute("""
-                SELECT id, created_at, dirname
+                SELECT id, created_at, cwd
                 FROM prompt 
                 WHERE session_id = ? AND stoped_at IS NULL
                 ORDER BY created_at DESC
@@ -98,7 +97,7 @@ class ClaudePromptTracker:
             
             row = cursor.fetchone()
             if row:
-                record_id, created_at, dirname = row
+                record_id, created_at, cwd = row
                 
                 # Update completion time
                 conn.execute("""
@@ -115,8 +114,9 @@ class ClaudePromptTracker:
                 
                 duration = self.calculate_duration_from_db(record_id)
                 self.send_notification(
-                    title=dirname or "Claude Task",
-                    subtitle=f"job#{seq} done, duration: {duration}"
+                    title=os.path.basename(cwd) if cwd else "Claude Task",
+                    subtitle=f"job#{seq} done, duration: {duration}",
+                    cwd=cwd
                 )
                 
                 logging.info(f"Task completed for session {session_id}, job#{seq}, duration: {duration}")
@@ -128,7 +128,6 @@ class ClaudePromptTracker:
         
         if 'waiting for your input' in message.lower():
             cwd = data.get('cwd', '')
-            dirname = os.path.basename(cwd) if cwd else 'Claude Task'
             
             with sqlite3.connect(self.db_path) as conn:
                 # Update lastWaitUserAt for the latest record
@@ -142,8 +141,9 @@ class ClaudePromptTracker:
                 conn.commit()
             
             self.send_notification(
-                title=dirname,
-                subtitle="Waiting for input"
+                title=os.path.basename(cwd) if cwd else 'Claude Task',
+                subtitle="Waiting for input",
+                cwd=cwd
             )
             
             logging.info(f"Waiting notification sent for session {session_id}")
@@ -199,15 +199,20 @@ class ClaudePromptTracker:
             logging.error(f"Error calculating duration: {e}")
             return "Unknown"
     
-    def send_notification(self, title, subtitle):
+    def send_notification(self, title, subtitle, cwd=None):
         """Send macOS notification using terminal-notifier"""
         try:
-            subprocess.run([
+            cmd = [
                 'terminal-notifier',
                 '-sound', 'default',
                 '-title', title,
                 '-subtitle', subtitle
-            ], check=False, capture_output=True)
+            ]
+            
+            if cwd:
+                cmd.extend(['-execute', f'/usr/local/bin/code "{cwd}"'])
+            
+            subprocess.run(cmd, check=False, capture_output=True)
             logging.info(f"Notification sent: {title} - {subtitle}")
         except FileNotFoundError:
             logging.warning("terminal-notifier not found, notification skipped")
@@ -247,7 +252,7 @@ def main():
     try:
         # Check if hook type is provided as command line argument
         if len(sys.argv) < 2:
-            logging.error("Usage: prompt_tracker.py <hook_type>")
+            logging.error("Usage: ccnotify.py <hook_type>")
             logging.error("Valid hook types: UserPromptSubmit, Stop, Notification")
             sys.exit(1)
         
