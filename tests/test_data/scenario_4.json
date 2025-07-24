@@ -1,0 +1,44 @@
+[
+  {
+    "session_id": "session_004a",
+    "transcript_path": "/Users/developer/.claude/projects/mobile-app/transcript_004a.jsonl",
+    "cwd": "/Users/developer/projects/mobile-app",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "开发一个React Native移动应用"
+  },
+  {
+    "session_id": "session_004b",
+    "transcript_path": "/Users/developer/.claude/projects/api-server/transcript_004b.jsonl",
+    "cwd": "/Users/developer/projects/api-server",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "创建一个RESTful API服务器"
+  },
+  {
+    "session_id": "session_004c",
+    "transcript_path": "/Users/developer/.claude/projects/frontend/transcript_004c.jsonl",
+    "cwd": "/Users/developer/projects/frontend",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "构建一个Vue.js前端界面"
+  },
+  {
+    "session_id": "session_004a",
+    "transcript_path": "/Users/developer/.claude/projects/mobile-app/transcript_004a.jsonl",
+    "cwd": "/Users/developer/projects/mobile-app",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "session_004b",
+    "transcript_path": "/Users/developer/.claude/projects/api-server/transcript_004b.jsonl",
+    "cwd": "/Users/developer/projects/api-server",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "session_004c",
+    "transcript_path": "/Users/developer/.claude/projects/frontend/transcript_004c.jsonl",
+    "cwd": "/Users/developer/projects/frontend",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  }
+]
