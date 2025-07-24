@@ -14,25 +14,34 @@
     "HTTP_PROXY": "http://127.0.0.1:1080",
     "HTTPS_PROXY": "http://127.0.0.1:1080"
   },
-  "hooks": {
-    "Stop": [
+  "hooks": 
+{
+    "UserPromptSubmit": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "terminal-notifier -group 'PROJECT_NAME' -title 'Stopped' -subtitle \"$(date '+%m%d %H:%M')\" -message \"Event: $CLAUDE_EVENT_TYPE | Tool: ${CLAUDE_TOOL_NAME:-N/A} | Files: $(echo \"$CLAUDE_FILE_PATHS\" | wc -w | tr -d ' ')\" -sound Glass"
+            "command": "~/.claude/scripts/prompt_tracker.py UserPromptSubmit"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/prompt_tracker.py Stop"
           }
         ]
       }
     ],
     "Notification": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "terminal-notifier -sound default -title cc -subtitle \"$(date '+%m%d %H:%M')\" -message notifier"
+            "command": "~/.claude/scripts/prompt_tracker.py Notification"
           }
         ]
       }
