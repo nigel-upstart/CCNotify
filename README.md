@@ -95,4 +95,4 @@ ccnotify tracks Claude sessions and provides notifications at key moments:
 - **When Claude completes**: Calculates duration and sends a completion notification
 - **When Claude waits for input**: Immediately alerts you that input is needed
 
-All activity is logged to `~/.claude/ccnotify/ccnotify.log` and session data is stored in `~/.claude/ccnotify/ccnotify.db` for tracking and analytics.
+All activity is logged to `~/.claude/ccnotify/ccnotify.log` and session data is stored in `~/.claude/ccnotify/ccnotify.db` locally. No data is uploaded or shared externally.
