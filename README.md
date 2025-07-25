@@ -15,16 +15,16 @@ CCNotify provides desktop notifications for Claude Code, alerting you when Claud
 
 ### 1. Install CCNotify
 ```bash
-# Create the scripts directory if it doesn't exist
-mkdir -p ~/.claude/scripts
+# Create the directory if it doesn't exist
+mkdir -p ~/.claude/ccnotify
 
-# soft link ccnotify.py to the scripts directory
-ln -f ccnotify.py ~/.claude/scripts/
+# soft link ccnotify.py to the directory
+ln -f ccnotify.py ~/.claude/ccnotify/
 
-chmod a+x ~/.claude/scripts/ccnotify.py
+chmod a+x ~/.claude/ccnotify/ccnotify.py
 
 # run this script, should print: ok
-~/.claude/scripts/ccnotify.py
+~/.claude/ccnotify/ccnotify.py
 
 ok
 
@@ -51,7 +51,7 @@ Add the following hooks to your Claude configuration to enable ccnotify:
       "hooks": [
         {
           "type": "command",
-          "command": "~/.claude/scripts/ccnotify.py UserPromptSubmit"
+          "command": "~/.claude/ccnotify/ccnotify.py UserPromptSubmit"
         }
       ]
     }
@@ -61,7 +61,7 @@ Add the following hooks to your Claude configuration to enable ccnotify:
       "hooks": [
         {
           "type": "command",
-          "command": "~/.claude/scripts/ccnotify.py Stop"
+          "command": "~/.claude/ccnotify/ccnotify.py Stop"
         }
       ]
     }
@@ -71,7 +71,7 @@ Add the following hooks to your Claude configuration to enable ccnotify:
       "hooks": [
         {
           "type": "command",
-          "command": "~/.claude/scripts/ccnotify.py Notification"
+          "command": "~/.claude/ccnotify/ccnotify.py Notification"
         }
       ]
     }
@@ -80,6 +80,13 @@ Add the following hooks to your Claude configuration to enable ccnotify:
 
 ```
 
+## Uninstall
+
+```bash
+rm -rf ~/.claude/ccnotify
+```
+
+Edit `~/.claude/settings.json` and remove all hook commands related to `ccnotify`.
 ## How It Works
 
 ccnotify tracks Claude sessions and provides notifications at key moments:
@@ -88,4 +95,4 @@ ccnotify tracks Claude sessions and provides notifications at key moments:
 - **When Claude completes**: Calculates duration and sends a completion notification
 - **When Claude waits for input**: Immediately alerts you that input is needed
 
-All activity is logged to `~/.claude/ccnotify.log` and session data is stored in `~/.claude/ccnotify.db` for tracking and analytics.
+All activity is logged to `~/.claude/ccnotify/ccnotify.log` and session data is stored in `~/.claude/ccnotify/ccnotify.db` for tracking and analytics.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Claude Code Prompt Tracker System
+Claude Code Notify
 """
 
 import os
@@ -16,14 +16,15 @@ from pathlib import Path
 class ClaudePromptTracker:
     def __init__(self):
         """Initialize the prompt tracker with database setup"""
-        self.db_path = Path.home() / ".claude" / "ccnotify.db"
-        self.db_path.parent.mkdir(exist_ok=True)
+        script_dir = Path(__file__).parent
+        self.db_path = script_dir / "ccnotify.db"
         self.setup_logging()
         self.init_database()
     
     def setup_logging(self):
         """Setup logging to file"""
-        log_path = Path.home() / ".claude" / "ccnotify.log"
+        script_dir = Path(__file__).parent
+        log_path = script_dir / "ccnotify.log"
         logging.basicConfig(
             filename=log_path,
             level=logging.INFO,
