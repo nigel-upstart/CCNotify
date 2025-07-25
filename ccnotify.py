@@ -201,12 +201,15 @@ class ClaudePromptTracker:
     
     def send_notification(self, title, subtitle, cwd=None):
         """Send macOS notification using terminal-notifier"""
+        from datetime import datetime
+        current_time = datetime.now().strftime("%B %d, %Y at %H:%M")
+        
         try:
             cmd = [
                 'terminal-notifier',
                 '-sound', 'default',
                 '-title', title,
-                '-subtitle', subtitle
+                '-subtitle', f"{subtitle}\n{current_time}"
             ]
             
             if cwd:

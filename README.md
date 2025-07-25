@@ -18,8 +18,8 @@ CCNotify provides desktop notifications for Claude Code, alerting you when Claud
 # Create the scripts directory if it doesn't exist
 mkdir -p ~/.claude/scripts
 
-# Copy ccnotify.py to the scripts directory
-cp ccnotify.py ~/.claude/scripts/
+# soft link ccnotify.py to the scripts directory
+ln -f ccnotify.py ~/.claude/scripts/
 
 chmod a+x ~/.claude/scripts/ccnotify.py
 
