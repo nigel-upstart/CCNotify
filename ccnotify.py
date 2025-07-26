@@ -9,28 +9,44 @@ import json
 import sqlite3
 import subprocess
 import logging
+from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime, timezone
-from pathlib import Path
 
 
 class ClaudePromptTracker:
     def __init__(self):
         """Initialize the prompt tracker with database setup"""
-        script_dir = Path(__file__).parent
-        self.db_path = script_dir / "ccnotify.db"
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.db_path = os.path.join(script_dir, "ccnotify.db")
         self.setup_logging()
         self.init_database()
     
     def setup_logging(self):
-        """Setup logging to file"""
-        script_dir = Path(__file__).parent
-        log_path = script_dir / "ccnotify.log"
-        logging.basicConfig(
-            filename=log_path,
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
+        """Setup logging to file with daily rotation"""
+        
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        log_path = os.path.join(script_dir, "ccnotify.log")
+        
+        # Create a timed rotating file handler
+        handler = TimedRotatingFileHandler(
+            log_path,
+            when='midnight',  # Rotate at midnight
+            interval=1,       # Every 1 day
+            backupCount=1,   # Keep 1 days of logs
+            encoding='utf-8'
+        )
+        
+        # Set the log format
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
+        handler.setFormatter(formatter)
+        
+        # Configure the root logger
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
     
     def init_database(self):
         """Create tables and triggers if they don't exist"""

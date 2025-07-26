@@ -10,6 +10,8 @@ CCNotify provides desktop notifications for Claude Code, alerting you when Claud
 - 🔗 **Click to jump back** when notifications are clicked, automatically taking you to the corresponding project in VS Code.
 - ⏱️ **Task Duration**: Displays started time, and how long the task took to complete
 
+**Note**: Currently compatible with macOS only.
+
 
 ## Installation Guide
 
@@ -80,13 +82,14 @@ Add the following hooks to your Claude configuration to enable ccnotify:
 
 ```
 
-## Uninstall
+## Try It Out
 
-```bash
-rm -rf ~/.claude/ccnotify
+To verify the notification system works, start a new Claude Code session and run:
 ```
+after 1 second, echo 'hello'
+```
+You should see a macOS notification appear.
 
-Edit `~/.claude/settings.json` and remove all hook commands related to `ccnotify`.
 ## How It Works
 
 ccnotify tracks Claude sessions and provides notifications at key moments:
@@ -96,3 +99,14 @@ ccnotify tracks Claude sessions and provides notifications at key moments:
 - **When Claude waits for input**: Immediately alerts you that input is needed
 
 All activity is logged to `~/.claude/ccnotify/ccnotify.log` and session data is stored in `~/.claude/ccnotify/ccnotify.db` locally. No data is uploaded or shared externally.
+
+
+## Uninstall
+
+Edit `~/.claude/settings.json` and remove all hook commands related to `ccnotify`.
+
+Remove all files with a single command:
+```bash
+rm -rf ~/.claude/ccnotify
+```
+
