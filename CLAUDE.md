@@ -154,10 +154,63 @@ Uses case-insensitive string matching on the notification message:
 - Suppresses "waiting for input" notifications (Stop handler will send "job done" instead)
 - All other notification types trigger immediate notifications
 
-### VS Code Integration (ccnotify.py:290-291)
-When `cwd` is provided, notifications include an execute command that opens the project in VS Code when clicked:
+### Intelligent Environment Detection (ccnotify.py:273-368)
+The `detect_claude_environment()` method automatically detects whether Claude Code is running in VS Code or Terminal:
+
+**Detection Process:**
+1. Finds all `claude` processes using `ps aux`
+2. Matches process by working directory using `lsof -a -p PID -d cwd`
+3. Walks up process tree (up to 5 levels) to detect parent applications
+4. Returns environment info: `{'type': 'vscode'|'terminal'|'unknown', 'tty': '...', 'cwd': '...'}`
+
+**VS Code Detection:**
+- Checks parent processes for 'code' or 'electron' in command name
+- Returns `{'type': 'vscode', 'cwd': cwd}`
+
+**Terminal Detection:**
+- Returns TTY information for precise tab identification
+- Returns `{'type': 'terminal', 'tty': tty, 'cwd': cwd}`
+
+### Smart Notification Click Actions (ccnotify.py:371-418)
+The `send_notification()` method configures different click actions based on detected environment:
+
+**VS Code Environment:**
+```python
+cmd.extend(["-activate", "com.microsoft.VSCode"])
+```
+- Uses `-activate` flag to bring VS Code to front when notification is clicked
+- Reliable across all VS Code windows
+
+**Terminal Environment:**
+```python
+cmd.extend(["-execute", f"{helper_script} {tty} '{cwd}'"])
+```
+- Uses `focus-terminal-tab.sh` helper script
+- Passes TTY and working directory for precise tab matching
+- Falls back to process/directory matching if TTY lookup fails
+
+**Unknown Environment (Fallback):**
 ```python
 cmd.extend(["-execute", f'/usr/local/bin/code "{cwd}"'])
+```
+- Opens directory in VS Code as last resort
+
+### Terminal Tab Focus Helper (focus-terminal-tab.sh)
+AppleScript-based helper that focuses the exact Terminal tab:
+
+**Primary Method - TTY Matching:**
+- Iterates through all Terminal windows and tabs
+- Matches by TTY property (most reliable identifier)
+- Example: `/dev/ttys001` uniquely identifies a specific tab
+
+**Fallback Method - Process Matching:**
+- If TTY match fails, searches for processes containing target CWD or "claude"
+- Less reliable but provides backup mechanism
+
+**Usage:**
+```bash
+./focus-terminal-tab.sh <tty> <cwd>
+# Example: ./focus-terminal-tab.sh ttys001 /Users/developer/project
 ```
 
 ### Logging Configuration (ccnotify.py:25-49)
@@ -205,7 +258,8 @@ The test suite includes:
 
 ## Project Files
 
-- `ccnotify.py` - Main executable script (single file, ~380 lines)
+- `ccnotify.py` - Main executable script (~500 lines)
+- `focus-terminal-tab.sh` - AppleScript helper for Terminal tab focusing
 - `tests/test_prompt_tracker.py` - Unit test suite
 - `tests/run_tests.py` - Manual test runner
 - `tests/test_data.py` - Test data generator

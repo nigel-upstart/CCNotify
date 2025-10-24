@@ -9,7 +9,9 @@ Starting from claude-code v1.0.95 (2025-08-31), any invalid settings in `~/.clau
 ## Features
 
 - 🔔 **Get notified** when Claude requires your input or completes a task.
-- 🔗 **Click to jump back** when notifications are clicked, automatically taking you to the corresponding project in VS Code.
+- 🔗 **Smart click-to-focus** - Intelligently detects your environment and focuses the right window:
+  - **VS Code**: Activates VS Code window
+  - **Terminal**: Focuses the exact terminal tab using TTY matching
 - ⏱️ **Task Duration**: Displays started time, and how long the task took to complete
 
 **Note**: Currently compatible with macOS only.
@@ -22,12 +24,15 @@ Starting from claude-code v1.0.95 (2025-08-31), any invalid settings in `~/.clau
 # Create the directory if it doesn't exist
 mkdir -p ~/.claude/ccnotify
 
-# soft link ccnotify.py to the directory
-ln -f ccnotify.py ~/.claude/ccnotify/
+# Copy ccnotify.py and helper script to the directory
+cp ccnotify.py ~/.claude/ccnotify/
+cp focus-terminal-tab.sh ~/.claude/ccnotify/
 
+# Make them executable
 chmod a+x ~/.claude/ccnotify/ccnotify.py
+chmod a+x ~/.claude/ccnotify/focus-terminal-tab.sh
 
-# run this script, should print: ok
+# Test that ccnotify is working (should print: ok)
 ~/.claude/ccnotify/ccnotify.py
 
 ok

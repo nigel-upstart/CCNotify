@@ -270,8 +270,106 @@ class ClaudePromptTracker:
             logging.error(f"Error calculating duration: {e}")
             return "Unknown"
 
+    def detect_claude_environment(self, cwd):
+        """Detect Claude Code environment without focusing - for click action configuration"""
+        try:
+            # Find claude processes with matching cwd
+            ps_output = subprocess.run(
+                ["ps", "aux"],
+                capture_output=True,
+                text=True,
+                check=False
+            ).stdout
+
+            claude_processes = []
+            for line in ps_output.split('\n'):
+                if 'claude' in line.lower() and 'grep' not in line:
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        pid = parts[1]
+                        tty = parts[6] if len(parts) > 6 else None
+                        claude_processes.append({'pid': pid, 'tty': tty, 'line': line})
+
+            if not claude_processes:
+                logging.debug("No claude processes found for environment detection")
+                return {'type': 'unknown', 'cwd': cwd}
+
+            # Check each process to find one with matching cwd
+            target_process = None
+            for proc in claude_processes:
+                try:
+                    # Get the working directory of the process
+                    proc_cwd = subprocess.run(
+                        ["lsof", "-a", "-p", proc['pid'], "-d", "cwd", "-Fn"],
+                        capture_output=True,
+                        text=True,
+                        check=False
+                    ).stdout
+
+                    # Parse lsof output to get directory
+                    for lsof_line in proc_cwd.split('\n'):
+                        if lsof_line.startswith('n'):
+                            proc_dir = lsof_line[1:].strip()
+                            if cwd and proc_dir == cwd:
+                                target_process = proc
+                                break
+
+                    if target_process:
+                        break
+                except Exception as e:
+                    logging.debug(f"Error checking process {proc['pid']}: {e}")
+                    continue
+
+            if not target_process:
+                logging.debug(f"No claude process found with cwd={cwd}")
+                return {'type': 'unknown', 'cwd': cwd}
+
+            # Determine if running in VS Code or Terminal
+            # Walk up the process tree to find VS Code
+            is_vscode = False
+            current_pid = target_process['pid']
+
+            # Check up to 5 levels up the process tree
+            for _ in range(5):
+                parent_info = subprocess.run(
+                    ["ps", "-p", current_pid, "-o", "ppid="],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                ).stdout.strip()
+
+                if not parent_info:
+                    break
+
+                parent_pid = parent_info.strip()
+                parent_cmd = subprocess.run(
+                    ["ps", "-p", parent_pid, "-o", "comm="],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                ).stdout.strip()
+
+                if 'code' in parent_cmd.lower() or 'electron' in parent_cmd.lower():
+                    is_vscode = True
+                    logging.debug(f"Found VS Code in process tree at PID {parent_pid}")
+                    break
+
+                current_pid = parent_pid
+
+            if is_vscode:
+                logging.info("Detected VS Code environment")
+                return {'type': 'vscode', 'cwd': cwd}
+            else:
+                logging.info(f"Detected Terminal environment, tty={target_process['tty']}")
+                return {'type': 'terminal', 'tty': target_process['tty'], 'cwd': cwd}
+
+        except Exception as e:
+            logging.error(f"Error detecting Claude environment: {e}")
+            return {'type': 'unknown', 'cwd': cwd}
+
+
     def send_notification(self, title, subtitle, cwd=None):
-        """Send macOS notification using terminal-notifier"""
+        """Send macOS notification using terminal-notifier with click-to-focus action"""
         from datetime import datetime
 
         current_time = datetime.now().strftime("%B %d, %Y at %H:%M")
@@ -287,8 +385,30 @@ class ClaudePromptTracker:
                 f"{subtitle}\n{current_time}",
             ]
 
+            # Detect environment and configure click action (don't focus now!)
             if cwd:
-                cmd.extend(["-execute", f'/usr/local/bin/code "{cwd}"'])
+                env_info = self.detect_claude_environment(cwd)
+
+                if env_info['type'] == 'vscode':
+                    # VS Code: Use -activate to focus VS Code when notification is clicked
+                    cmd.extend(["-activate", "com.microsoft.VSCode"])
+                    logging.info("Configured notification to activate VS Code on click")
+
+                elif env_info['type'] == 'terminal':
+                    # Terminal: Use helper script to focus the specific tab by TTY
+                    tty = env_info.get('tty', '')
+
+                    # Use the helper script that matches by TTY (most reliable)
+                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                    helper_script = os.path.join(script_dir, "focus-terminal-tab.sh")
+
+                    cmd.extend(["-execute", f"{helper_script} {tty} '{cwd}'"])
+                    logging.info(f"Configured notification to focus Terminal tab (tty={tty}) on click")
+
+                else:
+                    # Unknown environment: Fallback to opening directory in VS Code
+                    cmd.extend(["-execute", f'/usr/local/bin/code "{cwd}"'])
+                    logging.info("Configured notification to open in VS Code (fallback) on click")
 
             subprocess.run(cmd, check=False, capture_output=True)
             logging.info(f"Notification sent: {title} - {subtitle}")
